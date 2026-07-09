@@ -39,4 +39,6 @@ export const getReport = (jobId) => api.get(`/report/${jobId}`);
 
 export const downloadReportUrl = (jobId) => `${API_BASE}/download-report/${jobId}`;
 
+export const viewReportUrl = (jobId) => `${API_BASE}/view-report/${jobId}`;
+
 export default api;

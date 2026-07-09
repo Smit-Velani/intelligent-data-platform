@@ -49,6 +49,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# In-memory job store.
 JOBS: dict = {}
 
 
@@ -280,8 +281,8 @@ def get_report(job_id: str):
     return {"job_id": job_id, "report_text": report_text}
 
 
-@app.get("/download-report/{job_id}")
-def download_report(job_id: str):
+def _build_pdf(job_id: str) -> str:
+    """Shared helper: generates the PDF for a job and returns its path."""
     job = JOBS.get(job_id)
     if job is None or "selection_result" not in job:
         raise HTTPException(status_code=404, detail="Train a model for this job_id first.")
@@ -307,5 +308,22 @@ def download_report(job_id: str):
         calibration_plot_base64=explain_report.calibration_plot_base64 if explain_report else None,
     )
     _safe_db_call("save_report", job_id, report_text, pdf_path)
+    return pdf_path
 
-    return FileResponse(pdf_path, media_type="application/pdf", filename=f"idp_report_{job_id[:8]}.pdf")
+
+@app.get("/view-report/{job_id}")
+def view_report(job_id: str):
+    """Serves the PDF inline so it can be previewed in an iframe."""
+    pdf_path = _build_pdf(job_id)
+    return FileResponse(pdf_path, media_type="application/pdf")
+
+
+@app.get("/download-report/{job_id}")
+def download_report(job_id: str):
+    """Serves the PDF as a download (attachment)."""
+    pdf_path = _build_pdf(job_id)
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename=f"idp_report_{job_id[:8]}.pdf",
+    )
