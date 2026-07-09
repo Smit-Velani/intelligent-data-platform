@@ -1,45 +1,157 @@
----
+# Intelligent Data Platform (IDP)
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
+![XGBoost](https://img.shields.io/badge/XGBoost-EB0000?style=flat)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-F7931E?style=flat&logo=scikit-learn&logoColor=white)
+![SHAP](https://img.shields.io/badge/SHAP-1E88E5?style=flat)
+![Groq](https://img.shields.io/badge/Groq_LLaMA-00A67E?style=flat)
+![Tests](https://github.com/Smit-Velani/intelligent-data-platform/actions/workflows/tests.yml/badge.svg)
+
+> An end-to-end AutoML platform that turns any uploaded CSV into a cleaned, explained, deployment-ready model — with cost-aware model selection, SHAP explainability, PSI drift detection, an AI-generated business report, and a downloadable PDF — built with FastAPI, React, XGBoost, and Groq LLaMA 3.3.
+
+## Screenshots
+
+**Upload — automatic problem-type detection and cleaning**
+![Upload screen](docs/screenshots/upload.jpg)
+
+**Results — cost-aware model leaderboard with the winning model**
+![Results dashboard](docs/screenshots/results.jpg)
+
+**Explainability — SHAP global feature importance**
+![SHAP feature importance](docs/screenshots/shap.jpg)
+
+**Report — auto-generated PDF with LLM business summary**
+![PDF report](docs/screenshots/report.jpg)
+
+## Features
+
+**Automated Preprocessing**
+- Detects and fills missing values, encodes categoricals, scales numerics
+- Automatic problem-type detection: classification, regression, or clustering
+- Imbalance-aware stratified train/test split and stratified k-fold
+- Computes `scale_pos_weight` for imbalanced datasets
+
+**Cost-Aware AutoML**
+- Trains up to five models: Logistic Regression, Random Forest, XGBoost, Neural Network, SVM
+- Selects the winner by expected business cost, not just raw accuracy
+- Recall-floor guardrail prevents a "predict nothing" degenerate model
+- Human-readable decision log explaining why the winning model won
+
+**Explainability**
+- SHAP with adaptive explainer selection (Tree / Linear / Kernel)
+- LIME cross-checks on individual predictions
+- Calibration curves with Brier score
+- Global feature importance ranking
+
+**Drift Detection**
+- Population Stability Index (PSI) per feature
+- Kolmogorov-Smirnov test for distribution shift
+- Flags stable, moderate, or significant drift
+
+**Reporting**
+- Groq LLaMA 3.3 generates a plain-English business report
+- Downloadable PDF combining leaderboard, decision log, and charts
+- Inline PDF preview inside the app
+
+## Results on the Demo Dataset
+
+Validated on the [Kaggle Credit Card Fraud dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) — 284,807 transactions with a 0.17% fraud rate. Winning model: XGBoost.
+
+| Metric | Score |
+|---|---|
+| AUC-ROC | 0.981 |
+| AUC-PR | 0.848 |
+| Precision | 0.914 |
+| Recall | 0.805 |
+| F1 | 0.856 |
+
+The cost-aware selector chose XGBoost over Logistic Regression despite comparable AUC-ROC, because Logistic Regression's low precision (0.06) produced a far higher expected business cost — a concrete demonstration of why metric choice matters on imbalanced data.
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, FastAPI, Uvicorn |
+| ML & AI | Scikit-Learn, XGBoost, imbalanced-learn (SMOTE), SHAP, LIME, Groq LLaMA 3.3 |
+| Reporting | ReportLab (PDF), Matplotlib |
+| Data | MongoDB Atlas (optional persistence) |
+| Frontend | React |
+| Testing & CI | pytest, GitHub Actions |
+
+## Project Structure
+
+    intelligent-data-platform/
+    |
+    +-- backend/
+    |   +-- main.py                 FastAPI app + REST endpoints
+    |   +-- preprocessor.py         Cleaning, splitting, problem detection
+    |   +-- model_selector.py       Cost-aware AutoML + decision log
+    |   +-- explainer.py            SHAP / LIME / calibration
+    |   +-- drift_detector.py       PSI + KS-test drift detection
+    |   +-- reporter.py             Groq LLaMA report + PDF generation
+    |   +-- db.py                   MongoDB Atlas persistence (optional)
+    |
+    +-- frontend/
+    |   +-- public/index.html
+    |   +-- src/
+    |       +-- App.js              Stepper flow + layout
+    |       +-- Upload.js           Upload & target selection
+    |       +-- Dashboard.js        Cost config + training
+    |       +-- Results.js          Leaderboard, SHAP, drift, PDF
+    |       +-- api.js              API client
+    |       +-- theme.js            Design tokens
+    |
+    +-- tests/
+    |   +-- test_pipeline.py        pytest suite (14 tests)
+    |
+    +-- .github/workflows/tests.yml GitHub Actions CI
+    +-- requirements.txt
+    +-- Procfile
+    +-- .env.example
 
 ## Setup & Installation
 
-**Clone the repository:**
-```bash
+Clone the repository:
+
+```
 git clone https://github.com/Smit-Velani/intelligent-data-platform.git
 cd intelligent-data-platform
 ```
 
-**Backend:**
-```bash
+Backend:
+
+```
 conda create -n idp python=3.11 -y
 conda activate idp
 pip install -r requirements.txt
-cp .env.example .env   # add your GROQ_API_KEY and MONGODB_URI
+cp .env.example .env
 uvicorn backend.main:app --reload --port 8000
 ```
+
 Interactive API docs: `http://127.0.0.1:8000/docs`
 
-**Frontend:**
-```bash
+Frontend:
+
+```
 cd frontend
 npm install
 npm start
 ```
+
 Open browser at: `http://localhost:3000`
 
 Get free API keys:
 - Groq: https://console.groq.com
 - MongoDB Atlas (optional): https://www.mongodb.com/atlas
 
----
-
 ## Running Tests
 
-```bash
+```
 pip install pytest
 pytest -v
 ```
-
----
 
 ## API Endpoints
 
@@ -54,8 +166,6 @@ pytest -v
 | GET | `/report/{job_id}` | LLM-generated report text |
 | GET | `/view-report/{job_id}` | PDF report (inline preview) |
 | GET | `/download-report/{job_id}` | PDF report (download) |
-
----
 
 ## ML Design Decisions
 
@@ -75,9 +185,7 @@ pytest -v
 **Data-Size-Aware Speed Scaling**
 - SMOTE and 5-fold CV on small data where they are cheap
 - `scale_pos_weight` and 3-fold CV on large data — cut 284K-row training from ~20 min to ~3 min
-- SVM auto-excluded above 20K rows due to O(n²) complexity, logged explicitly
-
----
+- SVM auto-excluded above 20K rows due to O(n^2) complexity, logged explicitly
 
 ## Known Limitations
 
@@ -85,15 +193,11 @@ pytest -v
 - No authentication layer.
 - Not yet deployed to a public URL (runs locally).
 
----
-
 ## Author
 
 **Smitkumar Velani**
 MS Data Science — Northeastern University, Boston
 
 [GitHub](https://github.com/Smit-Velani) | [LinkedIn](https://linkedin.com/in/smit-velani) | [Portfolio](https://smit-velani.github.io)
-
----
 
 *Built with Python · FastAPI · React · XGBoost · SHAP · Groq LLaMA · Scikit-Learn*
