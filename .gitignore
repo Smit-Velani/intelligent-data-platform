@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+*.joblib
+
+# Data & outputs
+uploads/
+model_store/
+*.csv
+mlruns/
+
+# Node
+node_modules/
+frontend/build/
+
+# OS
+.DS_Store
+Thumbs.db
