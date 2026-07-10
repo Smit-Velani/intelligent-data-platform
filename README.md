@@ -13,11 +13,11 @@
 
 ## Screenshots
 
-**Data quality & leakage inspection — before any modeling**
-![Data quality report](docs/screenshots/data_quality.jpg)
-
 **Upload — automatic problem-type detection and cleaning**
 ![Upload screen](docs/screenshots/upload.jpg)
+
+**Data quality & leakage inspection — before any modeling**
+![Data quality report](docs/screenshots/data_quality.jpg)
 
 **Results — cost-aware model leaderboard with the winning model**
 ![Results dashboard](docs/screenshots/results.jpg)
