@@ -35,10 +35,10 @@ export default function App() {
       <header style={styles.header}>
         <div style={styles.brandRow}>
           <div style={styles.logo}>
-            <span style={styles.logoMark}>IDP</span>
+            <span style={styles.logoMark}>GB</span>
           </div>
           <div>
-            <h1 style={styles.title}>Intelligent Data Platform</h1>
+            <h1 style={styles.title}>GlassBox ML</h1>
             <p style={styles.subtitle}>
               Upload a CSV. Get a trained, explained, deployable model back.
             </p>

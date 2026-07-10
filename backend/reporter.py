@@ -1,5 +1,5 @@
-ï»¿"""
-reporter.py â€” Turns raw pipeline results (dataset stats, model leaderboard,
+"""
+reporter.py — Turns raw pipeline results (dataset stats, model leaderboard,
 decision log, SHAP importances, drift status) into:
   1. A plain-English analysis written by Groq LLaMA 3.3
   2. A downloadable PDF report combining that narrative with the key charts
@@ -96,7 +96,7 @@ def generate_llm_report(
 
     if client is None:
         return (
-            "[Groq API key not configured â€” this is a placeholder report.]\n\n"
+            "[Groq API key not configured — this is a placeholder report.]\n\n"
             "Add GROQ_API_KEY to your .env file to generate a real narrative report.\n\n"
             "--- Prompt that would have been sent ---\n" + prompt
         )
@@ -141,7 +141,7 @@ def generate_pdf_report(
     title_style = ParagraphStyle("TitleCenter", parent=styles["Title"], alignment=TA_CENTER)
     story = []
 
-    story.append(Paragraph("Intelligent Data Platform â€” Analysis Report", title_style))
+    story.append(Paragraph("GlassBox ML — Analysis Report", title_style))
     story.append(Paragraph(datetime.utcnow().strftime("Generated %B %d, %Y %H:%M UTC"), styles["Normal"]))
     story.append(Spacer(1, 0.25 * inch))
 

@@ -22,6 +22,7 @@ from backend.preprocessor import load_csv, preprocess
 from backend.model_selector import run_selection, CostMatrix
 from backend.explainer import generate_explainability_report, explain_single_prediction
 from backend.drift_detector import detect_drift
+from backend.data_quality import analyze_quality
 from backend.reporter import generate_llm_report, generate_pdf_report
 
 try:
@@ -38,7 +39,7 @@ MODEL_STORE_DIR = os.getenv("MODEL_STORE_DIR", os.path.join(ROOT_DIR, "model_sto
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(MODEL_STORE_DIR, exist_ok=True)
 
-app = FastAPI(title="Intelligent Data Platform API", version="1.0.0")
+app = FastAPI(title="GlassBox ML API", version="1.0.0")
 
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
@@ -80,7 +81,7 @@ class TrainRequest(BaseModel):
 
 @app.get("/")
 def health_check():
-    return {"status": "ok", "service": "Intelligent Data Platform API"}
+    return {"status": "ok", "service": "GlassBox ML API"}
 
 
 @app.post("/upload-dataset")
@@ -140,6 +141,28 @@ def preprocess_dataset(req: PreprocessRequest):
         "feature_names": result.feature_names,
         "dropped_columns": result.dropped_columns,
     }
+
+
+@app.get("/data-quality/{job_id}")
+def data_quality(job_id: str, target_col: Optional[str] = None):
+    job = JOBS.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="job_id not found. Upload a dataset first.")
+
+    tcol = target_col or job.get("target_col")
+    report = analyze_quality(job["df"], target_col=tcol)
+
+    return {
+        "job_id": job_id,
+        "n_rows": report.n_rows,
+        "n_cols": report.n_cols,
+        "quality_score": report.quality_score,
+        "high_count": report.high_count,
+        "medium_count": report.medium_count,
+        "info_count": report.info_count,
+        "findings": [f.__dict__ for f in report.findings],
+    }
+
 
 
 @app.post("/train")
