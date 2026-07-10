@@ -1,8 +1,15 @@
 """
-reporter.py — Turns raw pipeline results (dataset stats, model leaderboard,
+reporter.py - Turns raw pipeline results (dataset stats, model leaderboard,
 decision log, SHAP importances, drift status) into:
   1. A plain-English analysis written by Groq LLaMA 3.3
   2. A downloadable PDF report combining that narrative with the key charts
+
+Design notes:
+- The LLM is given STRUCTURED data (numbers, not raw rows), so it never sees
+  actual transaction records, only aggregate stats and metrics.
+- The LLM's output is treated as narrative text only. Every number that
+  appears in the PDF report's tables comes directly from our own computed
+  metrics, not from the LLM.
 """
 from __future__ import annotations
 
@@ -12,11 +19,13 @@ from datetime import datetime
 from typing import Optional
 
 from dotenv import load_dotenv
+
 try:
     from groq import Groq
     HAS_GROQ = True
-except ImportError:
+except Exception:
     HAS_GROQ = False
+
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -31,7 +40,7 @@ load_dotenv()
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
-def _get_groq_client() -> Optional["Groq"]:
+def _get_groq_client():
     if not HAS_GROQ:
         return None
     api_key = os.getenv("GROQ_API_KEY")
@@ -96,7 +105,7 @@ def generate_llm_report(
 
     if client is None:
         return (
-            "[Groq API key not configured — this is a placeholder report.]\n\n"
+            "[Groq API key not configured - this is a placeholder report.]\n\n"
             "Add GROQ_API_KEY to your .env file to generate a real narrative report.\n\n"
             "--- Prompt that would have been sent ---\n" + prompt
         )
@@ -141,7 +150,7 @@ def generate_pdf_report(
     title_style = ParagraphStyle("TitleCenter", parent=styles["Title"], alignment=TA_CENTER)
     story = []
 
-    story.append(Paragraph("GlassBox ML — Analysis Report", title_style))
+    story.append(Paragraph("GlassBox ML - Analysis Report", title_style))
     story.append(Paragraph(datetime.utcnow().strftime("Generated %B %d, %Y %H:%M UTC"), styles["Normal"]))
     story.append(Spacer(1, 0.25 * inch))
 

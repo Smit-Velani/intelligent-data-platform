@@ -7,11 +7,14 @@
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-F7931E?style=flat&logo=scikit-learn&logoColor=white)
 ![SHAP](https://img.shields.io/badge/SHAP-1E88E5?style=flat)
 ![Groq](https://img.shields.io/badge/Groq_LLaMA-00A67E?style=flat)
-![Tests](https://github.com/Smit-Velani/intelligent-data-platform/actions/workflows/tests.yml/badge.svg)
+![Tests](https://github.com/Smit-Velani/glassbox-ml/actions/workflows/tests.yml/badge.svg)
 
-> An end-to-end AutoML platform that turns any uploaded CSV into a cleaned, explained, deployment-ready model — with cost-aware model selection, SHAP explainability, PSI drift detection, an AI-generated business report, and a downloadable PDF — built with FastAPI, React, XGBoost, and Groq LLaMA 3.3.
+> An end-to-end AutoML platform that turns any uploaded CSV into a cleaned, explained, deployment-ready model. It inspects data quality and flags leakage before modeling, selects the best model by business cost, explains predictions with SHAP, checks for drift, and writes an AI-generated PDF report. Built with FastAPI, React, XGBoost, and Groq LLaMA 3.3.
 
 ## Screenshots
+
+**Data quality & leakage inspection — before any modeling**
+![Data quality report](docs/screenshots/data_quality.jpg)
 
 **Upload — automatic problem-type detection and cleaning**
 ![Upload screen](docs/screenshots/upload.jpg)
@@ -27,11 +30,17 @@
 
 ## Features
 
+**Data Quality & Leakage Detection**
+- Inspects the raw dataset before modeling and assigns a quality score (0-100)
+- Flags target leakage (features suspiciously correlated with the target)
+- Detects missing data, constant columns, duplicate rows, and high-cardinality ID columns
+- Reports outliers and class-imbalance severity with actionable guidance
+
 **Automated Preprocessing**
 - Detects and fills missing values, encodes categoricals, scales numerics
 - Automatic problem-type detection: classification, regression, or clustering
 - Imbalance-aware stratified train/test split and stratified k-fold
-- Computes `scale_pos_weight` for imbalanced datasets
+- Computes scale_pos_weight for imbalanced datasets
 
 **Cost-Aware AutoML**
 - Trains up to five models: Logistic Regression, Random Forest, XGBoost, Neural Network, SVM
@@ -57,7 +66,7 @@
 
 ## Results on the Demo Dataset
 
-Validated on the [Kaggle Credit Card Fraud dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) — 284,807 transactions with a 0.17% fraud rate. Winning model: XGBoost.
+Validated on the [Kaggle Credit Card Fraud dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) - 284,807 transactions with a 0.17% fraud rate. Winning model: XGBoost.
 
 | Metric | Score |
 |---|---|
@@ -67,7 +76,7 @@ Validated on the [Kaggle Credit Card Fraud dataset](https://www.kaggle.com/datas
 | Recall | 0.805 |
 | F1 | 0.856 |
 
-The cost-aware selector chose XGBoost over Logistic Regression despite comparable AUC-ROC, because Logistic Regression's low precision (0.06) produced a far higher expected business cost — a concrete demonstration of why metric choice matters on imbalanced data.
+The cost-aware selector chose XGBoost over Logistic Regression despite comparable AUC-ROC, because Logistic Regression's low precision (0.06) produced a far higher expected business cost - a concrete demonstration of why metric choice matters on imbalanced data.
 
 ## Tech Stack
 
@@ -82,10 +91,11 @@ The cost-aware selector chose XGBoost over Logistic Regression despite comparabl
 
 ## Project Structure
 
-    intelligent-data-platform/
+    glassbox-ml/
     |
     +-- backend/
     |   +-- main.py                 FastAPI app + REST endpoints
+    |   +-- data_quality.py         Leakage + data-quality inspection
     |   +-- preprocessor.py         Cleaning, splitting, problem detection
     |   +-- model_selector.py       Cost-aware AutoML + decision log
     |   +-- explainer.py            SHAP / LIME / calibration
@@ -97,7 +107,7 @@ The cost-aware selector chose XGBoost over Logistic Regression despite comparabl
     |   +-- public/index.html
     |   +-- src/
     |       +-- App.js              Stepper flow + layout
-    |       +-- Upload.js           Upload & target selection
+    |       +-- Upload.js           Upload, target select, data-quality panel
     |       +-- Dashboard.js        Cost config + training
     |       +-- Results.js          Leaderboard, SHAP, drift, PDF
     |       +-- api.js              API client
@@ -116,8 +126,8 @@ The cost-aware selector chose XGBoost over Logistic Regression despite comparabl
 Clone the repository:
 
 ```
-git clone https://github.com/Smit-Velani/intelligent-data-platform.git
-cd intelligent-data-platform
+git clone https://github.com/Smit-Velani/glassbox-ml.git
+cd glassbox-ml
 ```
 
 Backend:
@@ -158,6 +168,7 @@ pytest -v
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/upload-dataset` | Upload a CSV |
+| GET | `/data-quality/{job_id}` | Leakage + data-quality report |
 | POST | `/preprocess` | Clean, split, and detect problem type |
 | POST | `/train` | Cost-aware AutoML across models |
 | GET | `/results/{job_id}` | Leaderboard and decision log |
@@ -168,6 +179,11 @@ pytest -v
 | GET | `/download-report/{job_id}` | PDF report (download) |
 
 ## ML Design Decisions
+
+**Leakage & Data-Quality Inspection**
+- Flags features almost perfectly correlated with the target (classic leakage)
+- Surfaces duplicates, constant columns, outliers, and imbalance before training
+- Prevents "too good to be true" models caused by leaked signal
 
 **Cost-Aware Model Selection**
 - Converts each model's confusion matrix into an expected dollar cost
@@ -184,20 +200,20 @@ pytest -v
 
 **Data-Size-Aware Speed Scaling**
 - SMOTE and 5-fold CV on small data where they are cheap
-- `scale_pos_weight` and 3-fold CV on large data — cut 284K-row training from ~20 min to ~3 min
+- scale_pos_weight and 3-fold CV on large data - cut 284K-row training from ~20 min to ~3 min
 - SVM auto-excluded above 20K rows due to O(n^2) complexity, logged explicitly
 
 ## Known Limitations
 
-- In-memory job store — results are lost on server restart. A production version would persist to Redis or disk.
+- In-memory job store - results are lost on server restart. A production version would persist to Redis or disk.
 - No authentication layer.
 - Not yet deployed to a public URL (runs locally).
 
 ## Author
 
 **Smitkumar Velani**
-MS Data Science — Northeastern University, Boston
+MS Data Science - Northeastern University, Boston
 
 [GitHub](https://github.com/Smit-Velani) | [LinkedIn](https://linkedin.com/in/smit-velani) | [Portfolio](https://smit-velani.github.io)
 
-*Built with Python · FastAPI · React · XGBoost · SHAP · Groq LLaMA · Scikit-Learn*
+*Built with Python, FastAPI, React, XGBoost, SHAP, Groq LLaMA, Scikit-Learn*

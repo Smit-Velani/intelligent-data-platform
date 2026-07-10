@@ -12,6 +12,9 @@ export const uploadDataset = (file) => {
   });
 };
 
+export const getDataQuality = (jobId, targetCol) =>
+  api.get(`/data-quality/${jobId}`, { params: targetCol ? { target_col: targetCol } : {} });
+
 export const preprocessDataset = (jobId, targetCol, testSize = 0.2, nSplits = 5) =>
   api.post("/preprocess", {
     job_id: jobId,
@@ -38,7 +41,6 @@ export const getDrift = (jobId) => api.get(`/detect-drift/${jobId}`);
 export const getReport = (jobId) => api.get(`/report/${jobId}`);
 
 export const downloadReportUrl = (jobId) => `${API_BASE}/download-report/${jobId}`;
-
 export const viewReportUrl = (jobId) => `${API_BASE}/view-report/${jobId}`;
 
 export default api;
